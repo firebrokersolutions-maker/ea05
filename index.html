@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guilherme EA — Automated Trading Technology for MetaTrader</title>
+<meta name="description" content="Guilherme EA is an Expert Advisor built to automate market execution inside MetaTrader, with presets for XAU/USD, Forex, crypto and indices. Join the Telegram to see how it works.">
+<meta name="theme-color" content="#07090C">
+<link rel="canonical" href="./index.html">
+
+<!-- Open Graph / social preview -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Guilherme EA — Automated Trading Technology for MetaTrader">
+<meta property="og:description" content="An Expert Advisor designed to automate execution and support your strategy inside MetaTrader.">
+<meta property="og:image" content="images/og-cover.jpg">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%2307090C'/><rect x='9' y='7' width='4' height='18' fill='%23D9A441'/><rect x='19' y='11' width='4' height='14' fill='%233FCF8E'/></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+     TRACKING — cole seus scripts nos pontos indicados
+     ============================================================ -->
+
+<!-- META PIXEL HERE -->
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1589598356011362');
+fbq('track', 'PageView');
+</script>
+<!-- End Meta Pixel Code -->
+
+<!-- TIKTOK PIXEL HERE -->
+<!-- Cole aqui o script base do TikTok Pixel -->
+
+<!-- GOOGLE ANALYTICS HERE -->
+<!-- Cole aqui o gtag.js do Google Analytics 4 -->
+
+<!-- GOOGLE TAG MANAGER HERE (opcional) -->
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ink:#07090C;
+  --panel:#0E1218;
+  --panel-2:#121821;
+  --line:#1D242E;
+  --line-soft:#161C25;
+  --bone:#E8ECF1;
+  --muted:#828E9E;
+  --gold:#D9A441;
+  --gold-dim:#8A6A2C;
+  --green:#3FCF8E;
+  --red:#E5484D;
+  --maxw:1200px;
+  --pad:20px;
+  --r:4px;
+  --font-display:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--ink);color:var(--bone);
+  font-family:var(--font-body);font-size:16px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img,svg{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 var(--pad)}
+
+h1,h2,h3{font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0}
+h1{font-size:clamp(34px,8.4vw,64px)}
+h2{font-size:clamp(27px,6.2vw,44px)}
+h3{font-size:18px;letter-spacing:-.01em;font-weight:700}
+p{margin:0}
+
+/* mono utility label */
+.meta{font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.meta b{color:var(--gold);font-weight:500}
+
+.section{padding:64px 0;border-top:1px solid var(--line-soft)}
+.section-head{margin-bottom:34px}
+.section-head .meta{display:block;margin-bottom:14px}
+.lede{color:var(--muted);margin-top:14px;max-width:56ch;font-size:16px}
+
+/* ============================================================
+   TAPE + NAV
+   ============================================================ */
+.tape{
+  border-bottom:1px solid var(--line);background:#05070A;
+  overflow:hidden;position:relative;height:34px;
+}
+.tape-track{display:flex;gap:0;width:max-content;animation:slide 44s linear infinite}
+.tape:hover .tape-track{animation-play-state:paused}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tape-item{
+  display:flex;align-items:center;gap:8px;height:34px;padding:0 18px;
+  border-right:1px solid var(--line-soft);
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;white-space:nowrap;
+}
+.tape-item span:first-child{color:var(--muted)}
+.tape-item .up{color:var(--green)}
+.tape-item .down{color:var(--red)}
+
+.nav{
+  position:sticky;top:0;z-index:60;background:rgba(7,9,12,.86);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:24px;height:24px;flex:none}
+.brand-name{font-family:var(--font-display);font-weight:800;font-size:14px;letter-spacing:.05em;text-transform:uppercase}
+.brand-name i{color:var(--gold);font-style:normal}
+.nav-links{display:none;gap:26px}
+.nav-links a{font-size:13px;color:var(--muted);transition:color .18s}
+.nav-links a:hover{color:var(--bone)}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--font-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:var(--r);border:1px solid transparent;cursor:pointer;
+  transition:transform .16s ease,box-shadow .2s ease,background .2s ease;
+}
+.btn:active{transform:translateY(1px)}
+.btn-gold{
+  background:linear-gradient(180deg,#EBB955 0%,var(--gold) 55%,#B98A34 100%);
+  color:#14100A;box-shadow:0 0 0 1px rgba(217,164,65,.35),0 10px 30px -12px rgba(217,164,65,.6);
+}
+.btn-gold:hover{box-shadow:0 0 0 1px rgba(217,164,65,.6),0 14px 36px -12px rgba(217,164,65,.75)}
+.btn-ghost{border-color:var(--line);background:var(--panel);color:var(--bone)}
+.btn-ghost:hover{border-color:var(--gold-dim);background:var(--panel-2)}
+.btn-lg{width:100%;font-size:14px;padding:18px 22px}
+.btn-sm{font-size:11px;padding:10px 14px}
+@media(min-width:560px){.btn-lg{width:auto;font-size:15px;padding:19px 34px}}
+
+.tg-icon{width:17px;height:17px;flex:none}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{padding:40px 0 56px;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:-20% -40% auto -40%;height:520px;
+  background:radial-gradient(60% 60% at 50% 40%,rgba(217,164,65,.10),transparent 70%);
+  pointer-events:none;
+}
+.hero-grid{position:relative;display:grid;gap:34px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);
+  background:var(--panel);border-radius:100px;padding:7px 14px;margin-bottom:22px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex:none;box-shadow:0 0 0 3px rgba(63,207,142,.16)}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero-sub{color:var(--muted);margin-top:20px;font-size:17px;max-width:52ch}
+.hero-cta{margin-top:30px}
+.hero-note{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hero-note span{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hero-note i{color:var(--gold-dim);font-style:normal}
+
+/* ============================================================
+   TERMINAL (signature)
+   ============================================================ */
+.terminal{
+  border:1px solid var(--line);border-radius:6px;background:
+   linear-gradient(180deg,var(--panel-2),var(--panel));
+  box-shadow:0 40px 80px -40px rgba(0,0,0,.9);overflow:hidden;
+}
+.term-bar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0B0F15}
+.term-dots{display:flex;gap:5px}
+.term-dots i{width:8px;height:8px;border-radius:50%;background:#232B36;display:block}
+.term-dots i:first-child{background:#2E3846}
+.term-title{font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:.1em}
+.term-live{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;color:var(--green)}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+.term-tabs{display:flex;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.term-tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1 0 auto;background:none;border:0;border-right:1px solid var(--line-soft);
+  padding:12px 16px;text-align:left;cursor:pointer;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--muted);
+  border-bottom:2px solid transparent;transition:color .18s,background .18s;
+}
+.tab strong{display:block;font-size:12px;color:var(--bone);letter-spacing:.06em;font-weight:500;margin-bottom:3px}
+.tab[aria-selected="true"]{background:#0A0E14;border-bottom-color:var(--gold);color:var(--gold)}
+
+.term-quote{display:flex;align-items:flex-end;gap:12px;padding:16px 16px 6px}
+.q-price{font-family:var(--font-mono);font-size:26px;font-weight:500;letter-spacing:-.01em}
+.q-chg{font-family:var(--font-mono);font-size:12px;padding-bottom:5px}
+.q-chg.up{color:var(--green)}.q-chg.down{color:var(--red)}
+.q-tf{margin-left:auto;padding-bottom:6px}
+
+.chart-box{padding:0 6px 6px;position:relative}
+.chart{width:100%;height:auto;display:block}
+.scan{animation:scan 5.5s linear infinite}
+@keyframes scan{0%{transform:translateX(0);opacity:0}6%{opacity:.9}94%{opacity:.9}100%{transform:translateX(640px);opacity:0}}
+.cndl{animation:grow .5s cubic-bezier(.2,.8,.3,1) both}
+@keyframes grow{from{transform:scaleY(.05);opacity:0}to{transform:scaleY(1);opacity:1}}
+
+.term-log{border-top:1px solid var(--line);background:#080B10;padding:12px 14px 14px}
+.log-head{display:flex;justify-content:space-between;margin-bottom:9px}
+.log-line{
+  font-family:var(--font-mono);font-size:11.5px;line-height:1.9;color:#9AA6B5;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;animation:fadeUp .4s ease forwards;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.log-line b{color:var(--muted);font-weight:400}
+.log-line .k{color:var(--gold);font-weight:500}
+.log-line .g{color:var(--green)}
+.term-foot{border-top:1px solid var(--line);padding:10px 14px;background:#0B0F15}
+.term-foot .meta{font-size:10px;letter-spacing:.1em}
+
+/* ============================================================
+   CARDS / GRIDS
+   ============================================================ */
+.grid{display:grid;gap:14px}
+@media(min-width:640px){.g2{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:980px){.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}}
+
+.card{
+  border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+  padding:24px 22px;position:relative;transition:border-color .2s,background .2s,transform .2s;
+}
+.card::before{content:"";position:absolute;top:-1px;left:22px;width:26px;height:2px;background:var(--gold);opacity:0;transition:opacity .22s}
+.card:hover{border-color:#2A3341;background:var(--panel-2);transform:translateY(-2px)}
+.card:hover::before{opacity:1}
+.card h3{margin:16px 0 8px}
+.card p{color:var(--muted);font-size:14.5px}
+.ico{width:26px;height:26px;stroke:var(--gold);stroke-width:1.4;fill:none}
+
+.problem{
+  border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:var(--r);
+  background:linear-gradient(90deg,rgba(217,164,65,.05),transparent 60%);padding:26px 22px;margin-bottom:16px;
+}
+.problem p{font-family:var(--font-display);font-weight:600;font-size:clamp(18px,4.4vw,24px);line-height:1.3;letter-spacing:-.01em}
+.solution{color:var(--muted);font-size:16px;margin-bottom:30px;max-width:64ch}
+.solution strong{color:var(--bone);font-weight:600}
+
+/* MARKETS */
+.mkt{
+  border:1px solid var(--line);border-radius:var(--r);background:var(--panel);
+  padding:20px;display:flex;flex-direction:column;gap:14px;transition:border-color .2s,transform .2s;
+}
+.mkt:hover{border-color:var(--gold-dim);transform:translateY(-2px)}
+.mkt-top{display:flex;justify-content:space-between;align-items:flex-start}
+.mkt-sym{font-family:var(--font-display);font-weight:800;font-size:21px;letter-spacing:-.01em}
+.mkt-kind{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.spark{width:100%;height:44px}
+.mkt-preset{font-family:var(--font-mono);font-size:11px;color:var(--muted);border-top:1px solid var(--line-soft);padding-top:12px}
+
+/* VIDEO */
+.stage{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.stage-bar{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);background:#0B0F15}
+.stage-body{position:relative;aspect-ratio:16/9;background:
+  linear-gradient(180deg,#0C1017,#080B10);display:flex;align-items:center;justify-content:center}
+.stage-body svg.mockup{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.play{
+  position:relative;z-index:2;width:74px;height:74px;border-radius:50%;border:1px solid rgba(217,164,65,.5);
+  background:rgba(7,9,12,.7);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 12px rgba(217,164,65,.06);
+}
+.play svg{width:20px;height:20px;fill:var(--gold);margin-left:3px}
+.stage-cap{position:absolute;bottom:12px;left:14px;z-index:2}
+.stage-foot{padding:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+@media(min-width:700px){.stage-foot{flex-direction:row;align-items:center;justify-content:space-between}}
+
+/* STEPS */
+.steps{display:grid;gap:0;position:relative}
+.step{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:0 0 30px;position:relative}
+.step:last-child{padding-bottom:0}
+.step-n{
+  width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:var(--panel);
+  display:flex;align-items:center;justify-content:center;position:relative;z-index:2;
+  font-family:var(--font-mono);font-size:12px;color:var(--gold);
+}
+.step::after{content:"";position:absolute;left:21.5px;top:44px;bottom:-2px;width:1px;background:linear-gradient(180deg,var(--gold-dim),var(--line))}
+.step:last-child::after{display:none}
+.step h3{margin-bottom:6px}
+.step p{color:var(--muted);font-size:14.5px}
+@media(min-width:980px){
+  .steps{grid-template-columns:repeat(4,1fr);gap:24px}
+  .step{grid-template-columns:1fr;gap:16px;padding:0}
+  .step::after{left:44px;right:-24px;top:21.5px;bottom:auto;width:auto;height:1px;background:linear-gradient(90deg,var(--gold-dim),var(--line))}
+}
+
+/* COMMUNITY */
+.community{display:grid;gap:36px;align-items:center}
+@media(min-width:980px){.community{grid-template-columns:1fr 1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 28px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:100px;padding:8px 14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.chip b{color:var(--gold);font-weight:500}
+
+.phone{
+  width:min(300px,86vw);margin:0 auto;border:1px solid #232B36;border-radius:32px;background:#0B0F15;
+  padding:9px;box-shadow:0 50px 90px -50px rgba(0,0,0,1),0 0 0 1px rgba(217,164,65,.08);
+}
+.phone-screen{border-radius:24px;overflow:hidden;background:#0E1218;border:1px solid var(--line)}
+.ph-bar{display:flex;align-items:center;gap:10px;padding:13px 14px;background:#121821;border-bottom:1px solid var(--line)}
+.ph-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#8A6A2C);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:12px;color:#14100A;flex:none}
+.ph-name{font-size:13px;font-weight:600;line-height:1.2}
+.ph-sub{font-family:var(--font-mono);font-size:9.5px;color:var(--green);letter-spacing:.06em}
+.ph-body{padding:14px;display:flex;flex-direction:column;gap:9px;min-height:290px;background:
+  radial-gradient(120% 80% at 50% 0%,rgba(217,164,65,.05),transparent 60%),#0E1218}
+.bub{max-width:86%;border-radius:12px;padding:9px 12px;font-size:12.5px;line-height:1.5;border:1px solid var(--line)}
+.bub.in{background:#151C26;border-bottom-left-radius:3px}
+.bub.out{background:rgba(217,164,65,.11);border-color:rgba(217,164,65,.3);align-self:flex-end;border-bottom-right-radius:3px}
+.bub .t{font-family:var(--font-mono);font-size:9px;color:var(--muted);display:block;margin-top:5px;letter-spacing:.06em}
+.bub b{color:var(--gold);font-weight:600}
+.ph-foot{border-top:1px solid var(--line);padding:11px 14px;font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:.08em;background:#121821}
+
+/* FAQ */
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{
+  list-style:none;cursor:pointer;padding:20px 40px 20px 0;position:relative;
+  font-family:var(--font-display);font-weight:700;font-size:16.5px;letter-spacing:-.01em;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{
+  content:"";position:absolute;right:6px;top:26px;width:11px;height:11px;
+  border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);
+  transform:rotate(45deg);transition:transform .22s;
+}
+.faq details[open] summary::after{transform:rotate(-135deg);top:30px}
+.faq .ans{padding:0 20px 22px 0;color:var(--muted);font-size:15px}
+
+/* FINAL CTA */
+.final{
+  border:1px solid var(--line);border-radius:6px;padding:44px 24px;text-align:center;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#0F141C,#0A0D12);
+}
+.final::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(70% 90% at 50% 0%,rgba(217,164,65,.16),transparent 65%);
+}
+.final>*{position:relative}
+.final p{color:var(--muted);margin:16px auto 30px;max-width:44ch}
+@media(min-width:700px){.final{padding:64px 40px}}
+
+/* FOOTER */
+footer{border-top:1px solid var(--line);padding:40px 0 120px;background:#05070A}
+@media(min-width:900px){footer{padding-bottom:44px}}
+.foot-top{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center;padding-bottom:26px;border-bottom:1px solid var(--line-soft)}
+.disc{margin-top:24px;color:#6C7686;font-size:12px;line-height:1.7;max-width:78ch}
+.disc strong{color:var(--muted);font-weight:600}
+.foot-bot{margin-top:22px;display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+
+/* STICKY MOBILE CTA */
+.sticky{
+  position:fixed;left:0;right:0;bottom:0;z-index:80;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(7,9,12,.4),rgba(7,9,12,.97) 40%);
+  border-top:1px solid var(--line);backdrop-filter:blur(8px);
+  transform:translateY(120%);transition:transform .3s ease;
+}
+.sticky.on{transform:none}
+@media(min-width:900px){.sticky{display:none}}
+
+/* REVEAL */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rv.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .rv{opacity:1;transform:none}
+}
+
+/* DESKTOP HERO */
+@media(min-width:980px){
+  :root{--pad:32px}
+  .section{padding:90px 0}
+  .hero{padding:64px 0 90px}
+  .hero-grid{grid-template-columns:1.02fr 1.08fr;gap:52px;align-items:center}
+  .nav-links{display:flex}
+}
+</style>
+</head>
+<body>
+
+<!-- META PIXEL NOSCRIPT HERE -->
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1589598356011362&ev=PageView&noscript=1"/></noscript>
+
+<!-- ============================== TAPE ============================== -->
+<div class="tape" aria-hidden="true">
+  <div class="tape-track" id="tape"></div>
+</div>
+
+<!-- ============================== NAV ============================== -->
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="Guilherme EA — home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="8" y="5" width="4" height="22" fill="#D9A441"/>
+        <rect x="15" y="12" width="4" height="15" fill="#2A3341"/>
+        <rect x="22" y="9" width="4" height="18" fill="#3FCF8E"/>
+      </svg>
+      <span class="brand-name">Guilherme <i>EA</i></span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#solution">Technology</a>
+      <a href="#markets">Markets</a>
+      <a href="#how">How it works</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-gold btn-sm telegram-cta" id="nav-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener">Telegram</a>
+  </div>
+</header>
+
+<!-- ============================== HERO ============================== -->
+<main id="top">
+<section class="hero">
+  <div class="wrap hero-grid">
+
+    <div>
+      <div class="eyebrow">
+        <span class="dot"></span>
+        <span class="meta">MT4 / MT5 &nbsp;·&nbsp; <b>Expert Advisor</b></span>
+      </div>
+
+      <h1>Trade Smarter With <em>Automated</em> Technology</h1>
+
+      <p class="hero-sub">Discover the Expert Advisor designed to automate market execution, assist your trading strategy and operate directly inside MetaTrader.</p>
+
+      <div class="hero-cta">
+        <a class="btn btn-gold btn-lg telegram-cta" id="hero-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener">
+          <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.2c.9-.3 1.6.2 1.5 1.4Z"/></svg>
+          Access the Telegram
+        </a>
+      </div>
+
+      <div class="hero-note">
+        <span>EA</span><i>•</i><span>Trading Community</span><i>•</i><span>Market Analysis</span>
+      </div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="terminal rv" id="terminal">
+      <div class="term-bar">
+        <div class="term-dots"><i></i><i></i><i></i></div>
+        <span class="term-title">GUILHERME_EA — TERMINAL</span>
+        <span class="term-live"><i class="pulse"></i>ALGO ACTIVE</span>
+      </div>
+
+      <div class="term-tabs" role="tablist" aria-label="Instruments">
+        <button class="tab" role="tab" aria-selected="true" data-sym="XAUUSD"><strong>XAU/USD</strong>Gold</button>
+        <button class="tab" role="tab" aria-selected="false" data-sym="BTCUSD"><strong>BTC/USD</strong>Crypto</button>
+        <button class="tab" role="tab" aria-selected="false" data-sym="EURUSD"><strong>EUR/USD</strong>Forex</button>
+      </div>
+
+      <div class="term-quote">
+        <span class="q-price" id="qPrice">—</span>
+        <span class="q-chg up" id="qChg">—</span>
+        <span class="meta q-tf">M15 · PRESET 02</span>
+      </div>
+
+      <div class="chart-box">
+        <svg class="chart" id="chart" viewBox="0 0 640 250" preserveAspectRatio="none" role="img" aria-label="Illustrative price chart"></svg>
+      </div>
+
+      <div class="term-log">
+        <div class="log-head">
+          <span class="meta">Execution log</span>
+          <span class="meta">Server time</span>
+        </div>
+        <div id="log"></div>
+      </div>
+
+      <div class="term-foot">
+        <span class="meta">Interface preview · illustrative data · not a performance record</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================== PROBLEM / SOLUTION ============================== -->
+<section class="section" id="solution">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">The gap · <b>Manual vs automated</b></span>
+      <div class="problem">
+        <p>Trading manually requires time, discipline and constant market monitoring.</p>
+      </div>
+      <p class="solution"><strong>Guilherme EA</strong> was created to automate execution and help traders follow predefined strategies directly through MetaTrader.</p>
+    </div>
+
+    <div class="grid g2 g4">
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" stroke-linejoin="round"/></svg>
+        <h3>Automated Execution</h3>
+        <p>Orders are opened and managed by the algorithm, following the rules of the preset you select.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18"/></svg>
+        <h3>Multiple Markets</h3>
+        <p>Configurations available for gold, major FX pairs, crypto and indices.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="1.5"/><path d="M7 14V9M11 14v-3M15 14V7M8 21h8"/></svg>
+        <h3>MetaTrader Integration</h3>
+        <p>Runs inside the platform you already know, on MT4 and MT5 accounts.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/><circle cx="9" cy="6" r="2" fill="#07090C"/><circle cx="15" cy="12" r="2" fill="#07090C"/><circle cx="8" cy="18" r="2" fill="#07090C"/></svg>
+        <h3>Custom Trading Presets</h3>
+        <p>Switch between setups built for different strategies and risk profiles.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== EA IN ACTION ============================== -->
+<section class="section" id="action">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">Live demonstration</span>
+      <h2>See the EA in action</h2>
+      <p class="lede">A recorded MetaTrader session showing how the algorithm reads the chart, places orders and manages them from open to close.</p>
+    </div>
+
+    <div class="stage rv">
+      <div class="stage-bar">
+        <div class="term-dots"><i></i><i></i><i></i></div>
+        <span class="term-title">MetaTrader 5 — XAUUSD, M15 — Guilherme EA</span>
+      </div>
+
+      <!-- ============================================================
+           VÍDEO: substitua TODO o bloco .stage-body abaixo pelo seu embed.
+           Exemplo YouTube:
+           <div class="stage-body"><iframe style="position:absolute;inset:0;width:100%;height:100%;border:0"
+             src="https://www.youtube.com/embed/SEU_ID" title="Guilherme EA" allowfullscreen loading="lazy"></iframe></div>
+           Exemplo vídeo próprio:
+           <div class="stage-body"><video style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"
+             src="images/ea-demo.mp4" poster="images/ea-poster.webp" controls playsinline preload="none"></video></div>
+           ============================================================ -->
+      <div class="stage-body">
+        <svg class="mockup" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <pattern id="gr" width="50" height="45" patternUnits="userSpaceOnUse">
+              <path d="M50 0H0v45" fill="none" stroke="#161C25" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="800" height="450" fill="url(#gr)"/>
+          <rect x="0" y="0" width="800" height="26" fill="#0B0F15"/>
+          <rect x="12" y="9" width="90" height="8" rx="2" fill="#1D242E"/>
+          <rect x="112" y="9" width="46" height="8" rx="2" fill="#1D242E"/>
+          <rect x="0" y="26" width="150" height="424" fill="#0A0E14"/>
+          <g fill="#1D242E">
+            <rect x="14" y="44" width="118" height="7" rx="2"/><rect x="14" y="62" width="86" height="7" rx="2"/>
+            <rect x="14" y="80" width="102" height="7" rx="2"/><rect x="14" y="98" width="70" height="7" rx="2"/>
+            <rect x="14" y="116" width="110" height="7" rx="2"/>
+          </g>
+          <g id="mkc" stroke-width="6">
+            <path d="M200 250v90M240 210v120M280 240v70M320 190v110M360 220v90M400 170v120M440 200v80M480 150v110M520 190v90M560 140v120M600 180v90M640 130v110M680 170v100M720 120v120"
+                  stroke="#1F2A36" fill="none"/>
+          </g>
+          <path d="M200 300 240 280 280 285 320 250 360 260 400 225 440 235 480 200 520 215 560 180 600 195 640 165 680 180 720 150"
+                fill="none" stroke="#D9A441" stroke-width="2" opacity=".85"/>
+          <path d="M200 330 240 315 280 320 320 292 360 300 400 268 440 278 480 246 520 258 560 224 600 238 640 210 680 224 720 196"
+                fill="none" stroke="#3FCF8E" stroke-width="1.5" opacity=".5" stroke-dasharray="5 4"/>
+          <rect x="0" y="380" width="800" height="70" fill="#0A0E14" opacity=".9"/>
+          <g fill="#1D242E">
+            <rect x="170" y="396" width="180" height="8" rx="2"/><rect x="370" y="396" width="120" height="8" rx="2"/>
+            <rect x="510" y="396" width="90" height="8" rx="2"/><rect x="170" y="420" width="150" height="8" rx="2"/>
+            <rect x="340" y="420" width="200" height="8" rx="2"/>
+          </g>
+        </svg>
+        <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3l14 9-14 9V3Z"/></svg></span>
+        <span class="stage-cap meta">Demo recording · coming soon</span>
+      </div>
+
+      <div class="stage-foot">
+        <span class="meta">Full walkthrough and setup files are shared inside the Telegram channel</span>
+        <a class="btn btn-gold telegram-cta" id="video-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener" style="padding:15px 24px;font-size:13px">Watch &amp; access Telegram</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== MARKETS ============================== -->
+<section class="section" id="markets">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">Coverage</span>
+      <h2>One algorithm, four markets</h2>
+      <p class="lede">Each market behaves differently, so each one has its own configuration — volatility, session hours and risk settings are adjusted per instrument.</p>
+    </div>
+
+    <div class="grid g2 g4">
+      <article class="mkt rv">
+        <div class="mkt-top"><span class="mkt-sym">XAU/USD</span><span class="mkt-kind">Gold</span></div>
+        <svg class="spark" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 34 20 30 40 33 60 22 80 26 100 16 120 21 140 12 160 17 180 8 200 11" fill="none" stroke="#D9A441" stroke-width="1.6"/></svg>
+        <span class="mkt-preset">Preset: Gold Core · M15</span>
+      </article>
+      <article class="mkt rv">
+        <div class="mkt-top"><span class="mkt-sym">BTC/USD</span><span class="mkt-kind">Crypto</span></div>
+        <svg class="spark" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 26 20 14 40 30 60 18 80 32 100 20 120 34 140 16 160 28 180 14 200 22" fill="none" stroke="#3FCF8E" stroke-width="1.6"/></svg>
+        <span class="mkt-preset">Preset: Crypto 24/7 · H1</span>
+      </article>
+      <article class="mkt rv">
+        <div class="mkt-top"><span class="mkt-sym">EUR/USD</span><span class="mkt-kind">Forex</span></div>
+        <svg class="spark" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 22 20 26 40 20 60 25 80 18 100 23 120 15 140 21 160 14 180 19 200 13" fill="none" stroke="#D9A441" stroke-width="1.6"/></svg>
+        <span class="mkt-preset">Preset: FX Session · M30</span>
+      </article>
+      <article class="mkt rv">
+        <div class="mkt-top"><span class="mkt-sym">US30</span><span class="mkt-kind">Indices</span></div>
+        <svg class="spark" viewBox="0 0 200 44" preserveAspectRatio="none" aria-hidden="true"><path d="M0 32 20 28 40 31 60 24 80 27 100 19 120 24 140 15 160 20 180 12 200 16" fill="none" stroke="#3FCF8E" stroke-width="1.6"/></svg>
+        <span class="mkt-preset">Preset: Index Open · H1</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS ============================== -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">Getting started</span>
+      <h2>Four steps to your first setup</h2>
+    </div>
+
+    <div class="steps">
+      <div class="step rv"><span class="step-n">01</span><div><h3>Join our Telegram</h3><p>Get access to the channel where everything is shared.</p></div></div>
+      <div class="step rv"><span class="step-n">02</span><div><h3>Learn the configurations</h3><p>See how the EA works and which presets are available.</p></div></div>
+      <div class="step rv"><span class="step-n">03</span><div><h3>Install it on MetaTrader</h3><p>Follow the guided installation for MT4 or MT5.</p></div></div>
+      <div class="step rv"><span class="step-n">04</span><div><h3>Choose your setup</h3><p>Select the preset that matches your strategy and risk profile.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FEATURES ============================== -->
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">The ecosystem</span>
+      <h2>Everything you need inside one trading ecosystem</h2>
+    </div>
+
+    <div class="grid g2 g3">
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M4 10h-2M4 14h-2M22 10h-2M22 14h-2M10 4V2M14 4V2M10 22v-2M14 22v-2"/></svg>
+        <h3>Expert Advisor</h3><p>Automated execution directly through MetaTrader.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.5" fill="#07090C"/><circle cx="15" cy="16" r="2.5" fill="#07090C"/></svg>
+        <h3>Trading Presets</h3><p>Different configurations designed for different strategies and risk profiles.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="3.5"/><path d="M22 20v-2a4 4 0 0 0-3-3.8M16.5 4a3.5 3.5 0 0 1 0 6.6"/></svg>
+        <h3>Trading Community</h3><p>Access discussions, updates and market content.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 20V11M11 20V6M16 20v-6M21 20V9"/></svg>
+        <h3>Market Analysis</h3><p>Follow market ideas and technical analysis.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M8 6h6.5a3 3 0 0 1 0 6H8h7a3 3 0 0 1 0 6H8"/></svg>
+        <h3>Forex &amp; Gold</h3><p>Configurations developed for major FX markets and XAU/USD.</p>
+      </article>
+      <article class="card rv">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        <h3>Crypto &amp; Indices</h3><p>Additional configurations for markets such as BTC/USD and US30.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TELEGRAM COMMUNITY ============================== -->
+<section class="section" id="community">
+  <div class="wrap community">
+    <div class="rv">
+      <span class="meta" style="display:block;margin-bottom:14px">The channel</span>
+      <h2>More than just an EA</h2>
+      <p class="lede">Join our Telegram ecosystem and discover trading automation, market analysis, EA configurations and our trading community.</p>
+
+      <div class="chips">
+        <span class="chip"><b>›</b> EA files &amp; updates</span>
+        <span class="chip"><b>›</b> Preset library</span>
+        <span class="chip"><b>›</b> Daily market notes</span>
+        <span class="chip"><b>›</b> Setup support</span>
+      </div>
+
+      <a class="btn btn-gold btn-lg telegram-cta" id="community-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener">
+        <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.2c.9-.3 1.6.2 1.5 1.4Z"/></svg>
+        Join the Telegram
+      </a>
+    </div>
+
+    <div class="phone rv" aria-hidden="true">
+      <div class="phone-screen">
+        <div class="ph-bar">
+          <span class="ph-av">GE</span>
+          <span>
+            <span class="ph-name">Guilherme EA — Channel</span>
+            <span class="ph-sub">● online</span>
+          </span>
+        </div>
+        <div class="ph-body">
+          <div class="bub in">London session is open. Gold preset running on <b>M15</b>.<span class="t">09:02</span></div>
+          <div class="bub in">New <b>preset file</b> for BTC/USD posted in the files tab 📎<span class="t">10:18</span></div>
+          <div class="bub out">Just installed it on MT5, works fine 👌<span class="t">10:24</span></div>
+          <div class="bub in">Setup guide for beginners is pinned at the top of the channel.<span class="t">11:40</span></div>
+        </div>
+        <div class="ph-foot">EA · PRESETS · ANALYSIS · COMMUNITY</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FAQ ============================== -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="section-head rv">
+      <span class="meta">Questions</span>
+      <h2>Before you join</h2>
+    </div>
+
+    <div class="faq rv">
+      <details>
+        <summary>What is an Expert Advisor?</summary>
+        <div class="ans">An Expert Advisor (EA) is a program that runs inside MetaTrader and executes a trading strategy automatically. It reads the chart, applies its rules and manages orders without you having to place them by hand.</div>
+      </details>
+      <details>
+        <summary>Does the EA work with MetaTrader?</summary>
+        <div class="ans">Yes. Guilherme EA was built for MetaTrader and can be installed on MT4 and MT5 accounts. Installation is done by adding the file to the platform's Experts folder — the full guide is inside the Telegram channel.</div>
+      </details>
+      <details>
+        <summary>Can beginners use it?</summary>
+        <div class="ans">Yes. The installation is guided step by step and the presets come pre-configured. We still recommend starting on a demo account until you understand how the algorithm behaves in different market conditions.</div>
+      </details>
+      <details>
+        <summary>Which markets are supported?</summary>
+        <div class="ans">The main focus is XAU/USD and major Forex pairs. There are also additional configurations for markets such as BTC/USD and US30.</div>
+      </details>
+      <details>
+        <summary>Do I need to keep my computer running?</summary>
+        <div class="ans">MetaTrader has to stay connected for the EA to operate. Most traders either leave the platform open on their machine or use a VPS, which keeps it running 24 hours a day without depending on your own connection.</div>
+      </details>
+      <details>
+        <summary>Can I choose different risk configurations?</summary>
+        <div class="ans">Yes. Each preset uses different lot sizing and risk parameters, so you can pick the one that matches your account size and how conservative you want to be — and change it whenever you want.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FINAL CTA ============================== -->
+<section class="section" style="border-top:0">
+  <div class="wrap">
+    <div class="final rv">
+      <span class="meta">Next step</span>
+      <h2 style="margin-top:16px">Ready to discover automated trading?</h2>
+      <p>Access our Telegram and learn how Guilherme EA works.</p>
+      <a class="btn btn-gold btn-lg telegram-cta" id="final-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener">
+        <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.2c.9-.3 1.6.2 1.5 1.4Z"/></svg>
+        Access Guilherme EA
+      </a>
+      <p style="margin:20px auto 0;font-size:12px">Free access · No installation required to join</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <a class="brand" href="#top">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="8" y="5" width="4" height="22" fill="#D9A441"/>
+          <rect x="15" y="12" width="4" height="15" fill="#2A3341"/>
+          <rect x="22" y="9" width="4" height="18" fill="#3FCF8E"/>
+        </svg>
+        <span class="brand-name">Guilherme <i>EA</i></span>
+      </a>
+      <a class="btn btn-ghost btn-sm telegram-cta" id="footer-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener">Telegram Channel</a>
+    </div>
+
+    <p class="disc">
+      <strong>Risk disclaimer.</strong> Trading foreign exchange, CFDs, indices and crypto assets involves a high level of risk and may not be suitable for every investor. You can lose part or all of your capital. Guilherme EA is an automation tool for MetaTrader: it executes predefined rules and does not predict market direction or produce any specific result. Past behaviour of a strategy does not indicate future outcomes. Nothing on this page is investment advice or a recommendation to trade. Test any configuration on a demo account first and only trade with money you can afford to lose.
+    </p>
+
+    <div class="foot-bot">
+      <span class="meta">© <span id="yr">2026</span> Guilherme EA · All rights reserved</span>
+      <span class="meta">Not affiliated with MetaQuotes, Telegram or any broker</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================== STICKY MOBILE CTA ============================== -->
+<div class="sticky" id="sticky">
+  <a class="btn btn-gold btn-lg telegram-cta" id="sticky-telegram" href="https://t.me/+Nx0wguSdyQIwNTVh" target="_blank" rel="noopener" style="width:100%">
+    <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 18.6 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 13.1l-4.8-1.5c-1-.3-1-1 .2-1.5l18.8-7.2c.9-.3 1.6.2 1.5 1.4Z"/></svg>
+    Access Telegram
+  </a>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- market data (illustrative only) ---------- */
+  var MK = {
+    XAUUSD:{p:3412.85, dec:2, vol:3.4, chg:'+0.42%'},
+    BTCUSD:{p:96480.00, dec:0, vol:520, chg:'+1.18%'},
+    EURUSD:{p:1.08654, dec:5, vol:0.0011, chg:'-0.09%'},
+    US30  :{p:42186.0, dec:1, vol:38, chg:'+0.31%'}
+  };
+  function fmt(n,d){return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+  /* ---------- top tape ---------- */
+  var tape = document.getElementById('tape');
+  if(tape){
+    var order=['XAUUSD','BTCUSD','EURUSD','US30'], html='';
+    for(var r=0;r<6;r++){
+      for(var i=0;i<order.length;i++){
+        var s=order[i], m=MK[s], up=m.chg.charAt(0)==='+';
+        html+='<div class="tape-item"><span>'+s+'</span><span>'+fmt(m.p,m.dec)+'</span>'+
+              '<span class="'+(up?'up':'down')+'">'+(up?'▲':'▼')+' '+m.chg.replace(/[+-]/,'')+'</span></div>';
+      }
+    }
+    tape.innerHTML=html;
+  }
+
+  /* ---------- seeded series for the hero chart ---------- */
+  function rng(seed){return function(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296;};}
+  function build(seed,base,vol,n){
+    var r=rng(seed),p=base,out=[];
+    for(var i=0;i<n;i++){
+      var o=p,c=o+(r()-0.47)*vol,h=Math.max(o,c)+r()*vol*0.55,l=Math.min(o,c)-r()*vol*0.55;
+      out.push([o,h,l,c]); p=c;
+    }
+    return out;
+  }
+
+  var chart=document.getElementById('chart'),
+      qP=document.getElementById('qPrice'), qC=document.getElementById('qChg'),
+      W=640,H=250,N=40,PAD=10,current='XAUUSD';
+
+  function draw(sym){
+    if(!chart) return;
+    var m=MK[sym], data=build(sym.charCodeAt(0)*7919+sym.length*13, m.p, m.vol, N),
+        hi=-Infinity, lo=Infinity, i;
+    for(i=0;i<N;i++){ if(data[i][1]>hi)hi=data[i][1]; if(data[i][2]<lo)lo=data[i][2]; }
+    var span=(hi-lo)||1, y=function(v){return PAD+(hi-v)/span*(H-PAD*2);},
+        step=W/N, bw=Math.max(3,step*0.52), s='';
+
+    /* grid */
+    for(i=1;i<5;i++){ var gy=PAD+(H-PAD*2)*i/5; s+='<line x1="0" y1="'+gy.toFixed(1)+'" x2="'+W+'" y2="'+gy.toFixed(1)+'" stroke="#141A22" stroke-width="1"/>'; }
+
+    /* candles */
+    var ma=[];
+    for(i=0;i<N;i++){
+      var d=data[i], cx=i*step+step/2, up=d[3]>=d[0],
+          col=up?'#3FCF8E':'#E5484D',
+          top=y(Math.max(d[0],d[3])), bot=y(Math.min(d[0],d[3])),
+          hgt=Math.max(1.5,bot-top), dl=RM?0:(i*0.028).toFixed(3);
+      s+='<g class="cndl" style="transform-origin:'+cx.toFixed(1)+'px '+((top+bot)/2).toFixed(1)+'px;animation-delay:'+dl+'s">'+
+         '<line x1="'+cx.toFixed(1)+'" y1="'+y(d[1]).toFixed(1)+'" x2="'+cx.toFixed(1)+'" y2="'+y(d[2]).toFixed(1)+'" stroke="'+col+'" stroke-width="1" opacity=".75"/>'+
+         '<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hgt.toFixed(1)+'" fill="'+col+'" opacity="'+(up?'.9':'.8')+'"/></g>';
+      var sum=0,cnt=0;
+      for(var k=Math.max(0,i-4);k<=i;k++){sum+=data[k][3];cnt++;}
+      ma.push(cx.toFixed(1)+' '+y(sum/cnt).toFixed(1));
+    }
+
+    /* algo line + entry marker */
+    s+='<polyline points="'+ma.join(' ')+'" fill="none" stroke="#D9A441" stroke-width="1.6" opacity=".9"/>';
+    var e=Math.floor(N*0.62), ex=e*step+step/2, ey=y(data[e][3]);
+    s+='<line x1="0" y1="'+ey.toFixed(1)+'" x2="'+W+'" y2="'+ey.toFixed(1)+'" stroke="#D9A441" stroke-width="1" stroke-dasharray="4 5" opacity=".45"/>';
+    s+='<circle cx="'+ex.toFixed(1)+'" cy="'+ey.toFixed(1)+'" r="4.5" fill="#07090C" stroke="#D9A441" stroke-width="1.6"/>';
+    s+='<rect class="scan" x="0" y="0" width="1.5" height="'+H+'" fill="#D9A441" opacity="0"/>';
+
+    chart.innerHTML=s;
+    var last=data[N-1][3];
+    if(qP) qP.textContent=fmt(last,m.dec);
+    if(qC){ var up2=m.chg.charAt(0)!=='-'; qC.textContent=m.chg; qC.className='q-chg '+(up2?'up':'down'); }
+  }
+  draw(current);
+
+  /* ---------- instrument tabs ---------- */
+  var tabs=document.querySelectorAll('.tab');
+  Array.prototype.forEach.call(tabs,function(t){
+    t.addEventListener('click',function(){
+      Array.prototype.forEach.call(tabs,function(x){x.setAttribute('aria-selected','false');});
+      t.setAttribute('aria-selected','true');
+      current=t.getAttribute('data-sym');
+      draw(current);
+      renderLog();
+    });
+  });
+
+  /* ---------- execution log ---------- */
+  var LOG=[
+    ['09:41:02','SCAN','conditions matched on M15'],
+    ['09:41:02','ENTRY','order sent · 0.10 lot'],
+    ['09:41:03','RISK','stop loss / take profit applied by preset'],
+    ['10:07:44','MANAGE','trailing stop activated'],
+    ['10:26:19','CLOSE','position closed by strategy rule']
+  ];
+  var logEl=document.getElementById('log');
+  function renderLog(){
+    if(!logEl) return;
+    logEl.innerHTML='';
+    LOG.forEach(function(l,i){
+      var d=document.createElement('div');
+      d.className='log-line';
+      d.style.animationDelay=(RM?0:(0.5+i*0.45))+'s';
+      d.innerHTML='<b>'+l[0]+'</b>&nbsp; <span class="k">'+l[1]+'</span>&nbsp; <span class="g">'+current+'</span> — '+l[2];
+      logEl.appendChild(d);
+    });
+  }
+  renderLog();
+
+  /* ---------- gentle price drift on the tape ---------- */
+  if(!RM){
+    setInterval(function(){
+      var items=document.querySelectorAll('.tape-item');
+      Array.prototype.forEach.call(items,function(it){
+        var sym=it.children[0].textContent, m=MK[sym];
+        if(!m) return;
+        var np=m.p*(1+(Math.random()-0.5)*0.0006);
+        it.children[1].textContent=fmt(np,m.dec);
+      });
+    },3200);
+  }
+
+  /* ---------- scroll reveal ---------- */
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.08});
+    document.querySelectorAll('.rv').forEach(function(el){io.observe(el);});
+  } else {
+    document.querySelectorAll('.rv').forEach(function(el){el.classList.add('in');});
+  }
+
+  /* ---------- FAQ: one open at a time ---------- */
+  var dets=document.querySelectorAll('.faq details');
+  Array.prototype.forEach.call(dets,function(d){
+    d.addEventListener('toggle',function(){
+      if(d.open) Array.prototype.forEach.call(dets,function(o){ if(o!==d) o.open=false; });
+    });
+  });
+
+  /* ---------- sticky mobile CTA ---------- */
+  var sticky=document.getElementById('sticky'), hero=document.querySelector('.hero');
+  if(sticky&&hero&&'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){
+      sticky.classList.toggle('on', !es[0].isIntersecting);
+    },{threshold:0}).observe(hero);
+  }
+
+  /* ---------- year ---------- */
+  var yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear();
+
+  /* ============================================================
+     CTA TRACKING — dispara evento em qualquer botão .telegram-cta
+     O ID do botão (hero-telegram, video-telegram, etc.) é enviado
+     como parâmetro, permitindo comparar qual CTA converte mais.
+     ============================================================ */
+  document.querySelectorAll('.telegram-cta').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var id=btn.id||'unknown';
+      try{ if(typeof fbq==='function') fbq('track','Lead',{content_name:id}); }catch(e){}
+      try{ if(typeof ttq!=='undefined'&&ttq.track) ttq.track('ClickButton',{content_id:id}); }catch(e){}
+      try{ if(typeof gtag==='function') gtag('event','telegram_click',{cta_id:id}); }catch(e){}
+      try{ window.dataLayer=window.dataLayer||[]; window.dataLayer.push({event:'telegram_click',cta_id:id}); }catch(e){}
+    },{passive:true});
+  });
+})();
+</script>
+</body>
+</html>
